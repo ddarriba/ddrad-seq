@@ -1,0 +1,35 @@
+- Albinaria RAW data
+
+  Data files:
+    Albinaria98inds_c91d6m4p3.alleles       Per-locus allele data
+    Albinaria98inds_c91d6m4p3.excluded_loci Initial excluded loci
+    Albinaria98inds_c91d6m4p3.geno
+    Albinaria98inds_c91d6m4p3.loci          Per-locus MSAs
+    Albinaria98inds_c91d6m4p3.loci.head     Per-locus headers
+    Albinaria98inds_c91d6m4p3.nex           Supermatrix in NEXUS
+    Albinaria98inds_c91d6m4p3.phy           Supermatrix in PHYLIP
+    Albinaria98inds_c91d6m4p3.snps          Supermatrix with SNPs only
+                                            Includes '_' as loci separator
+    Albinaria98inds_c91d6m4p3.str           ***What's this?
+    Albinaria98inds_c91d6m4p3.unlinked_snps SNPs in PHYLIP
+    Albinaria98inds_c91d6m4p3.vcf           VCF file
+
+    ./loci
+      ./i                                   One thousand loci (i = j/1000)
+        Albinaria98inds_c91d6m4p3.locus.j   MSA for locus j
+
+  Summary files:
+    taxa        List of taxa
+    taxa.desc   Taxa statistics
+    loci.desc   Loci statistics
+
+  Scripts:
+    gather_info.sh    Creates the loci description file
+      Input: per-locus files (loci directory)
+      Output: loci.desc
+    map_taxa.sh       Maps the taxa per-locus (order as in 'taxa' file)
+      Input: Albinaria98inds_c91d6m4p3.loci.head
+      Output: Map of taxa per-locus (1: present 0: absent)
+    split_loci.sh     Creates and populates the 'loci' directory structure
+      Input: Albinaria98inds_c91d6m4p3.loci
+      Output: Per-locus MSAs in 'loci' directory
