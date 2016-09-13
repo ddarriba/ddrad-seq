@@ -5,7 +5,7 @@ taxafile    = "../raw/taxa"
 dupsfile    = "taxa.dups"
 
 outputfile = "loci.splitsupport"
-do_output  = TRUE
+do_output  = FALSE
 
 if (do_output)
   unlink(outputfile)
@@ -86,3 +86,19 @@ if (!file.exists(outputfile))
     print(i)
   }
 }
+
+
+# reload splits_table
+splits = read.table("loci.splitsupport")
+unlink("loci.splitsupport.user")
+for (i in 1:(dim(splits)[1]))
+{
+  l=splits[i,3:100]
+  l[l==0]="x"
+  l[l==1]="0"
+  l[l==2]="1"
+  l=paste(l, collapse="")
+  write(file="loci.splitsupport.user", c(splits[i,1], splits[i,2], l), ncol=3, append=TRUE)
+}
+
+hist(splits[,2], xlab="Support", ylab="Frequency", main="Split support")

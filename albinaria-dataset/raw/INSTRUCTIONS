@@ -1,0 +1,11 @@
+1. Run scripts/initial_process.sh [PREFIX]
+
+    Generates 'taxa' and '%.loci.head' files
+
+2. Run scripts/split_loci.sh [PREFIX]
+
+    Generates per-locus MSA files in 'perlocus' directory
+
+3. Run scripts/gather_info.sh [PREFIX]
+
+    Generates loci.desc file

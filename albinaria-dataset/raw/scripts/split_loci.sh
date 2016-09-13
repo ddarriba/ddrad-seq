@@ -1,9 +1,15 @@
 #!/bin/sh
 # split .loci file into individual loci (.fas format)
+#
+# This script generates one msa file per locus
 
-base_name=Albinaria98inds_c91d6m4p3
+base_name=$1
 loci_file=${base_name}.loci
-output_dir=perlocus
+
+if [ ! -f ${loci_file} ]; then
+  echo "[ERROR] Loci file does not exist: ${loci_file}"
+
+output_dir=loci
 mkdir -p $output_dir
 
 tmp_file=$output_dir/tmp

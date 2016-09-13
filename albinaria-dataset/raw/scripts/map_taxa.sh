@@ -1,4 +1,4 @@
-base_name=Albinaria98inds_c91d6m4p3
+base_name=$1
 loci_file=${base_name}.loci.head
 
 list=

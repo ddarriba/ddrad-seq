@@ -1,3 +1,7 @@
+- The process scripts were written such that they are effective but not
+  necessarily efficient since they only need to run once and there is no
+  hurry at all. Hence, sit down and relax while the data is processed.
+
 - Albinaria RAW data
 
   Data files:
@@ -5,7 +9,6 @@
     Albinaria98inds_c91d6m4p3.excluded_loci Initial excluded loci
     Albinaria98inds_c91d6m4p3.geno
     Albinaria98inds_c91d6m4p3.loci          Per-locus MSAs
-    Albinaria98inds_c91d6m4p3.loci.head     Per-locus headers
     Albinaria98inds_c91d6m4p3.nex           Supermatrix in NEXUS
     Albinaria98inds_c91d6m4p3.phy           Supermatrix in PHYLIP
     Albinaria98inds_c91d6m4p3.snps          Supermatrix with SNPs only
@@ -13,6 +16,8 @@
     Albinaria98inds_c91d6m4p3.str           ***What's this?
     Albinaria98inds_c91d6m4p3.unlinked_snps SNPs in PHYLIP
     Albinaria98inds_c91d6m4p3.vcf           VCF file
+
+    Albinaria98inds_c91d6m4p3.loci.head     Per-locus headers
 
     ./loci
       ./i                                   One thousand loci (i = j/1000)
