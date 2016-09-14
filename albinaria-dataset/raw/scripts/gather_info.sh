@@ -3,6 +3,10 @@
 
 base_name=$1
 
+RAXML_BIN=raxmlHPC-SSE3
+RAXML_EXECNAME=readseq
+RAXML_OUTFILE=RAxML_info.$RAXML_EXECNAME
+
 loci_file=${base_name}.loci
 locihead_file=${base_name}.loci.head
 perlocus_dir=loci
@@ -22,7 +26,9 @@ echo "# ninf:   number of informative sites" >> $outfile
 echo "# vprop:  proportion of var sites (nvar + ninf)/len" >> $outfile
 echo "# gapy:   gapyness (proportion of gaps: n_gaps/(ntax*len))" >> $outfile
 echo "# tmap:   existing taxa in the locus" >> $outfile
-printf "#%4s %4s %6s %5s %5s %6s %6s %6s %6s\n" id ntax tprop len nvar ninf vprop gapy tmap >> $outfile
+echo "# eftax:  effective number of taxa" >> $outfile
+echo "# dups:   list of duplicated sequences" >> $outfile
+printf "#%4s %4s %6s %5s %5s %6s %6s %6s %6s %6s %6s\n" id ntax tprop len nvar ninf vprop gapy tmap eftaxa dups >> $outfile
 
 loci_sections=`fgrep -n "//" $loci_file | cut -d':' -f 1`
 cur_line=1
@@ -31,7 +37,20 @@ n_loci=`echo $loci_sections | wc -w`
 for locus_end in $loci_sections; do
   locus_file=${perlocus_dir}/$((locus_id/1000))/${base_name}.locus.${locus_id}
 
+  # process locus_file with raxml
+  $RAXML_BIN -f c -s ${locus_file} -m GTRGAMMA -n $RAXML_EXECNAME > /dev/null
+  identical_seqs=`grep "WARNING:" $RAXML_OUTFILE | grep "exactly identical" | cut -d' ' -f4,6`
+  ndups=`echo $identical_seqs | wc -w`
+  dups="0,0"
+  for tname in $identical_seqs; do
+    tid=`fgrep -n $tname $taxa_file | cut -d':' -f 1`
+    dups="$dups,$tid"
+  done
+  rm $RAXML_OUTFILE
+
   n_taxa=$((locus_end-cur_line))
+  eftaxa=$((n_taxa - ndups/2))
+
   n_sites=`sed "${cur_line}q;d" ${loci_file} | xargs | cut -d' ' -f2 | wc -c`
   varsites_line=`sed "${locus_end}q;d" ${loci_file}`
   n_var=$((`echo "${varsites_line//[^'-']}" | wc -c`-1))
@@ -58,7 +77,7 @@ for locus_end in $loci_sections; do
   n_gaps=`fgrep -o '-' $locus_file | wc -l`
   gapyness=`echo "scale=4; $n_gaps/($n_taxa * $n_sites)" | bc -l`
 
-  printf "%5s %4s %6s %5s %5s %6s %6s %6s   %s\n" $locus_id $n_taxa $taxa_prop $n_sites $n_var $n_inf $var_prop $gapyness $tmap >> $outfile
+  printf "%5s %4s %6s %5s %5s %6s %6s %6s   %s %6s %s\n" $locus_id $n_taxa $taxa_prop $n_sites $n_var $n_inf $var_prop $gapyness $tmap $eftaxa $dups >> $outfile
   echo ${locus_id}/${n_loci}
 
   locus_id=$((locus_id+1))
