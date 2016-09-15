@@ -9,3 +9,11 @@
 3. Run scripts/gather_info.sh [PREFIX]
 
     Generates loci.desc file
+
+4. Generate taxa info (statInfo.r)
+
+    $ Rscript --vanilla statInfo,r
+
+5. Generate process files
+
+    $ Rscript --vanilla create_proc.r [PREFIX]
