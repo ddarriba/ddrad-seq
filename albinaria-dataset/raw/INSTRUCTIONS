@@ -12,8 +12,8 @@
 
 4. Generate taxa info (statInfo.r)
 
-    $ Rscript --vanilla statInfo,r
+    $ Rscript --vanilla scripts/stat_info.r
 
 5. Generate process files
 
-    $ Rscript --vanilla create_proc.r [PREFIX]
+    $ Rscript --vanilla scripts/create_proc.r [PREFIX]
