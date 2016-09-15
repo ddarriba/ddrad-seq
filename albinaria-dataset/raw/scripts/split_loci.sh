@@ -8,6 +8,8 @@ loci_file=${base_name}.loci
 
 if [ ! -f ${loci_file} ]; then
   echo "[ERROR] Loci file does not exist: ${loci_file}"
+  exit
+fi
 
 output_dir=loci
 mkdir -p $output_dir

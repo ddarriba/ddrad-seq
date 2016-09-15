@@ -43,9 +43,10 @@ for locus_end in $loci_sections; do
   ndups=`echo $identical_seqs | wc -w`
   dups="0,0"
   for tname in $identical_seqs; do
-    tid=`fgrep -n $tname $taxa_file | cut -d':' -f 1`
+    tid=`grep -n "^${tname}$" $taxa_file | cut -d':' -f 1`
     dups="$dups,$tid"
   done
+
   rm $RAXML_OUTFILE
 
   n_taxa=$((locus_end-cur_line))
@@ -83,15 +84,3 @@ for locus_end in $loci_sections; do
   locus_id=$((locus_id+1))
   cur_line=$((locus_end+1))
 done
-
-exit
-# find taxa representation
-i=0
-rm ${taxadesc_file}
-while read taxon; do
-  repr=`fgrep $taxon $loci_file | wc -l`
-  rperc=`echo "scale=4; 100*$repr/$n_loci" | bc -l`
-  printf "%12s %8s %8s\n" $taxon $repr $rperc >> ${taxadesc_file}
-  echo $i
-  i=$((i+1))
-done < taxa
