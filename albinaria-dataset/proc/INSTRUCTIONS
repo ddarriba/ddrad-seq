@@ -1,0 +1,9 @@
+scripts in this directory require the final filtered set of sequences in (e.g.,) loci directory
+
+1. Run scripts/eval_loci.sh [INPUT_SUBDIR] [OUTPUT_DIR]
+
+    Where input subdir is the subdirectory in loci/
+
+    e.g., scripts/eval_loci.sh 0 res
+
+    Generates a set of 100 ML trees per locus.
