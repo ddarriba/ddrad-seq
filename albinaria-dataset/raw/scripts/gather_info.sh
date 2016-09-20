@@ -53,6 +53,7 @@ for locus_end in $loci_sections; do
   eftaxa=$((n_taxa - ndups/2))
 
   n_sites=`sed "${cur_line}q;d" ${loci_file} | xargs | cut -d' ' -f2 | wc -c`
+  n_sites=$((n_sites - 1))
   varsites_line=`sed "${locus_end}q;d" ${loci_file}`
   n_var=$((`echo "${varsites_line//[^'-']}" | wc -c`-1))
   n_inf=$((`echo "${varsites_line//[^'*']}" | wc -c`-1))

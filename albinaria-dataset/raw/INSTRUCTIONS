@@ -17,3 +17,11 @@
 5. Generate process files
 
     $ Rscript --vanilla scripts/create_proc.r [PREFIX]
+
+6. Build the concatenated MSA
+
+    $ Rscript --vanilla scripts/build_supermatrix.r [PREFIX]
+
+    Generates 2 files: supermatrix.[phy|fas] and supermatrix.parts
+    If you want to generate several according to different filters, do not 
+    forget to backup the previous ones!
