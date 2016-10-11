@@ -5,10 +5,14 @@ taxafile    = "../raw/taxa"
 dupsfile    = "taxa.dups"
 
 outputfile = "loci.splitsupport"
-do_output  = FALSE
+outputtrees = "loci.toptrees"
 
-if (do_output)
+do_output  = TRUE
+
+if (do_output) {
   unlink(outputfile)
+  unlink(outputtrees)
+}
 
 get_split = function(spl, indices, ntax, alltax, duplist)
 {
@@ -64,7 +68,13 @@ if (!file.exists(outputfile))
     trees = read.tree(treesfile)
     n_trees = length(trees)
     stopifnot(n_trees == desc$ntrees[i])
+    n_topos = desc$ntopos[i]
     n_taxa = length(trees[[1]]$tip.label)
+
+    if (n_topos == 1) {
+      # dump tree
+      write.tree(trees[[1]], file=outputtrees, append=TRUE)
+    }
 
     # get all different splits + freqs
     splits = bitsplits(trees)
@@ -80,13 +90,12 @@ if (!file.exists(outputfile))
     for (j in 1:n_splits)
     {
       splits_table[j,] = get_split(as.numeric(splits$matsplit[,j]), taxa_indices, n_taxa, n_alltaxa, duplist)
-      write(file=outputfile, c(id, splits_support[j], splits_table[j,]), ncol=n_alltaxa+2, append=TRUE)
+      write(file=outputfile, c(id, splits_support[j], paste(splits_table[j,], collapse="")), ncol=n_alltaxa+2, append=TRUE)
       stopifnot(sum(splits_table[j,]>0) == n_taxa + duptaxa)
     }
     print(i)
   }
 }
-
 
 # reload splits_table
 splits = read.table("loci.splitsupport")

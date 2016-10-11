@@ -93,7 +93,22 @@ for (i in 0:9)
 {
   n_samples = sum(data$tprop >= i/10)
   n_samples_filtered = sum(data$tprop[filter$all==1] >= i/10)
-  cat(">=", formatC(i/10, width=5), "% : ", 
+  cat(">=", formatC(i*10, width=5), "% : ", 
+      formatC(n_samples, width=6), " : ", 
+      format(100*n_samples/nloci, nsmall=3, digits=3, width=8, justify="right"), "%", 
+      formatC(n_samples_filtered, width=8),
+      format(100*n_samples_filtered/sum(filter$all), nsmall=3, digits=3, width=8, justify="right"), "%\n", 
+      sep="")
+}
+cat("\n")
+
+cat("\n  ftaxa    n_loci   %loci    n_loci[F]   %loci[F]\n")
+cat("--------------------------------------------------\n")
+for (i in sort(unique(data$eftaxa)))
+{
+  n_samples = sum(data$eftaxa >= i)
+  n_samples_filtered = sum(data$eftaxa[filter$all==1] >= i)
+  cat(">=", formatC(i, width=4), " : ", 
       formatC(n_samples, width=6), " : ", 
       format(100*n_samples/nloci, nsmall=3, digits=3, width=8, justify="right"), "%", 
       formatC(n_samples_filtered, width=8),

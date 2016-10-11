@@ -23,6 +23,7 @@ echo "# tprop:  proportion of taxa (ntax/98)" >> $outfile
 echo "# len:    length (number of sites)" >> $outfile
 echo "# nvar:   number of variable sites" >> $outfile
 echo "# ninf:   number of informative sites" >> $outfile
+echo "# nbsnp:  number of biallelic snps" >> $outfile
 echo "# vprop:  proportion of var sites (nvar + ninf)/len" >> $outfile
 echo "# gapy:   gapyness (proportion of gaps: n_gaps/(ntax*len))" >> $outfile
 echo "# tmap:   existing taxa in the locus" >> $outfile
@@ -51,6 +52,8 @@ for locus_end in $loci_sections; do
 
   n_taxa=$((locus_end-cur_line))
   eftaxa=$((n_taxa - ndups/2))
+
+  sed -n "${cur_line},$((locus_end))p" $loci_file | rev > $tmp_file
 
   n_sites=`sed "${cur_line}q;d" ${loci_file} | xargs | cut -d' ' -f2 | wc -c`
   n_sites=$((n_sites - 1))
