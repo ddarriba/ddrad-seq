@@ -7,3 +7,9 @@ scripts in this directory require the final filtered set of sequences in (e.g.,)
     e.g., scripts/eval_loci.sh 0 res
 
     Generates a set of 100 ML trees per locus.
+
+2. Run scripts/ntrees.sh 
+
+    This script gathers the resulting per-locus trees
+
+3. Run Rscript --vanilla scripts/compute_support.sh

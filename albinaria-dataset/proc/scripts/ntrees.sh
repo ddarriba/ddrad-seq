@@ -1,12 +1,16 @@
 raxml_bin="/usr/local/bin/raxmlHPC-SSE3"
 outfile_base=perlocus.trees
+resbase_dir=res
 
-[ -z $1 ] && kdirs=`seq 0 17` || kdirs=$1
+n_kdirs=`ls res | wc -l`
+kdirs=`seq 0 $((n_kdirs-1))`
 
 if [[ ! -f "$raxml_bin" ]]; then
   echo "Error: Binary $raxml_bin does not exist."
   exit
 fi
+
+rm -f ${outfile_base}
 
 for kvalue in $kdirs; do
   outfile=${outfile_base}.${kvalue}
@@ -15,7 +19,7 @@ for kvalue in $kdirs; do
   start_index=$((1000 * $kvalue))
   end_index=$((1000 * ($kvalue + 1)))
 
-	resFolder=res/$kvalue
+	resFolder=$resbase_dir/$kvalue
   datFN=`echo $datFolder | rev | cut -d'/' -f1 | rev`
 	for ((i=$start_index; i<$end_index; i++)); do #treesFile in $resFolder/*.trees; do
     treesFile="res/$kvalue/Albinaria98inds_c91d6m4p3.locus.${i}.*"
@@ -35,4 +39,5 @@ for kvalue in $kdirs; do
       rm RAxML_*.$datIndex
     fi
 	done
+  cat ${outfile} >> ${outfile_base}
 done

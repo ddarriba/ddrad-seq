@@ -10,15 +10,15 @@ desc_file = "loci.desc"
 
 ####################################
 
-locus_desc = scan(desc_file, list(locus_id=0, ntaxa=0, taxaprop=0, len=0, nvar=0, ninf=0, varprop=0, gapy=0, taxamap=""), comment.char="#", quiet=TRUE)
-
-results = matrix(ncol=7, nrow=12046)
+locus_desc = scan(desc_file, list(id=0, ntax=0, tprop=0, len=0, nvar=0, ninf=0, vprop=0, gapy=0, tmap="", eftaxa=0, dups=""), comment.char="#", quiet=TRUE)
+results = matrix(ncol=7, nrow=length(locus_desc$id))
 colnames(results) = c("id", "ntaxa", "ninf", "ntrees", "unique", "rf", "rsupport")
 
 sequential_index = 1
-for (klocus_id in 0:17)
+n_kloci = length(dir("res"))
+for (klocus_id in 0:(n_kloci-1))
 {
-  cat("parse file", klocus_id, "/ 17\n")
+  cat("parse file", klocus_id, "/", n_kloci-1, "\n")
   rf_file    = fname(rf_prefix, klocus_id)
   ntrees_file = fname(nt_prefix, klocus_id)
 
