@@ -12,4 +12,8 @@ scripts in this directory require the final filtered set of sequences in (e.g.,)
 
     This script gathers the resulting per-locus trees
 
-3. Run Rscript --vanilla scripts/compute_support.sh
+3. Compute per-locus RF distances to a comprehensive tree
+
+    scripts/plot_in_mre.sh [TREEFILE]
+
+4. Run Rscript --vanilla scripts/compute_support.sh

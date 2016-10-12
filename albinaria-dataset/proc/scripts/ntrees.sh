@@ -1,6 +1,7 @@
 raxml_bin="/usr/local/bin/raxmlHPC-SSE3"
 outfile_base=perlocus.trees
 resbase_dir=res
+prefix=$1
 
 n_kdirs=`ls res | wc -l`
 kdirs=`seq 0 $((n_kdirs-1))`
@@ -22,7 +23,7 @@ for kvalue in $kdirs; do
 	resFolder=$resbase_dir/$kvalue
   datFN=`echo $datFolder | rev | cut -d'/' -f1 | rev`
 	for ((i=$start_index; i<$end_index; i++)); do #treesFile in $resFolder/*.trees; do
-    treesFile="res/$kvalue/Albinaria98inds_c91d6m4p3.locus.${i}.*"
+    treesFile="res/$kvalue/$prefix.locus.${i}.*"
     treesFile=`ls $treesFile 2> /dev/null`
     if [ ! -z $treesFile ]; then
       datIndex=$i #((kvalue*1000 + i))
