@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Usage:
+#
+#  eval_loci.sh [K_DIR] [RESULTS_DIR] [f]
+#
+#    K_DIR = 0..(n_kdirs-1)
+#    RESULTS_DIR = Output results directory
+#    f (optional) = Force recomputation
+#
+
 raxml_bin="raxmlHPC-SSE3"
 seedlist_file=scripts/seeds
 n_parsimony=50
@@ -63,6 +72,7 @@ test_bin=`which $raxml_bin`
 if [[ -f $test_bin ]]; then
 	datFolder=loci/$1
 	resFolder=$2/$1
+  force_recomp=$3
 	logFolder=log/$1
   mkdir -p $resFolder || exit
   mkdir -p $logFolder || exit
@@ -70,8 +80,10 @@ if [[ -f $test_bin ]]; then
   echo "$seedlist" > $resFolder/$datFN.seeds
 	for datFile in $datFolder/*; do
 		datName=$(basename "$datFile")
-		echo `date` "Processing $datFile -> $resFolder/$datName";
-		process $raxml_bin $datFile "$resFolder/$datName.trees" $n_parsimony $n_random "$logFolder/$datName.log";
+    if [ "$force_recomp" == "f" -o ! -f $resFolder/$datName.trees ]; then
+  		echo `date` "Processing $datFile -> $resFolder/$datName";
+  		process $raxml_bin $datFile "$resFolder/$datName.trees" $n_parsimony $n_random "$logFolder/$datName.log";
+    fi
 	done;
 else
 	echo "Error: Binary $raxml_bin does not exist."
