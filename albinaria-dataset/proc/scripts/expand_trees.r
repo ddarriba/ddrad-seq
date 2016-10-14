@@ -8,7 +8,8 @@ args = commandArgs(trailingOnly=TRUE)
 #input files
 taxafile = "taxa"
 taxamapfile = "taxamap"
-treefile = args[1]
+consensusdir = args[1]
+treefile = paste(consensusdir, "consensus.trees", sep="/")
 stopifnot(file.exists(treefile))
 outputfile = paste(treefile, "expanded", sep=".") #"consensus.trees.expanded"
 locifile = "loci.desc"
@@ -24,12 +25,17 @@ if (file.exists(taxamapfile)) {
   taxamap = lapply(strsplit(data$tmap, ''), as.numeric)
   n_taxa = length(taxamap[[1]])
 
-  filterInf = which(data$ninf == 0)
-  filterTax = which(data$eftaxa < 4)
-  filterOut = unique(c(filterInf, filterTax))
-  
-  data_filtered = lapply(data, function(x) x[-filterOut])
-  taxamap_filtered = taxamap[-filterOut]
+  filterIn = c()
+  kconsfiles = dir(consensusdir, pattern="consensus..*..trees")
+  for (f in kconsfiles) {
+    kconsfile = paste(consensusdir, f, sep="/")
+    kconsdata = scan(kconsfile, list(0, ""), quiet=TRUE)
+    filterIn = c(filterIn, kconsdata[[1]])
+  }
+  filterIn = sort(filterIn)
+
+  data_filtered = lapply(data, function(x) x[filterIn])
+  taxamap_filtered = taxamap[filterIn]
 
   # update duplicates
   seqduplicates = lapply(strsplit(data_filtered$dups, ','), as.numeric)
@@ -96,15 +102,25 @@ for (i in 1:n_trees)
   curline = taxamap[i,2:row_len]
   n_seqs = max(curline)
   curtree = trees[i]
-  for (j in 2:n_seqs)
-  {
-    if (sum(curline == j) > 1)
+  if (n_seqs >= 2) {
+    for (j in 2:n_seqs)
     {
-      dups = which(curline == j)
-      curname = taxanames[dups[1]]
-      newname = paste(taxanames[dups], collapse=",")
-      stopifnot(length(grep(curname, curtree))>0)
-      curtree = gsub(curname, newname, curtree)
+      if (sum(curline == j) > 1)
+      {
+        dups = which(curline == j)
+        tfound = 0
+        for (k in dups) {
+          testpattern = paste("([(,]+)", taxanames[k], "([,):]+)", sep="")
+          if (length(grep(testpattern, curtree))>0) {
+            tfound = tfound+1
+            curname = testpattern
+          }
+        }
+        stopifnot(tfound == 1)
+        newname = paste(taxanames[dups], collapse=",")
+        newname = paste('\\1',newname,'\\2', sep="")
+        curtree = gsub(curname, newname, curtree)
+      }
     }
   }
   trees[i] = curtree

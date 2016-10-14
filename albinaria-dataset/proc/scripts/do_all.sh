@@ -163,7 +163,7 @@ done
   if [ "$?" == "0" ]; then
     echo "... $loci_consensus_file already expanded"
   else
-    Rscript --vanilla scripts/expand_trees.r $loci_consensus_file
+    Rscript --vanilla scripts/expand_trees.r $CONSENSUS_DIR
   fi
 
 # step 3: evaluate supermatrices
