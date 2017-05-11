@@ -6,37 +6,37 @@
 # %.loci.head file will contain the headers of %.loci but taxa names are
 # converted to the indices in 'taxa' file.
 #
-# Run: initial_process.sh [PREFIX]
+# Run: initial_process.sh [DATA_DIR]
 
-prefix=$1
+source scripts/aux/common.sh
 
-# check files
-loci_file=${prefix}.loci
-phy_file=${prefix}.phy
+# input
+[[ -f ${file_loci} ]] || { echo "Loci file missing"; exit; }
+[[ -f ${file_phylip} ]] || { echo "PHYLIP file missing"; exit; }
 
-#output
-taxa_file=taxa
-loci_head_file=${prefix}.loci.head
+# output
+[[ -z ${file_taxa} ]] && { echo "Taxa file undefined"; exit; }
+[[ -z ${file_loci_head} ]] && { echo "Loci head file undefined"; exit; }
 
 #generate taxa file
 echo "Generate taxa file"
-cut -d' ' -f 1 ${phy_file} | tail -n +2 > ${taxa_file}
+cut -d' ' -f 1 ${file_phylip} | tail -n +2 > ${file_taxa}
 
-n_taxa=`cat ${taxa_file} | wc -l`
+n_taxa=`cat ${file_taxa} | wc -l`
 echo "... there are ${n_taxa} taxa"
 
 #generate loci head file
-cut -d' ' -f 1 ${loci_file} > ${loci_head_file}
+cut -d' ' -f 1 ${file_loci} > ${file_loci_head}
 
 echo "Start replacing taxa"
 
 i=1
 while read taxon; do
   printf "... replace %15s ${i}/${n_taxa}\n" ${taxon}
-  sed -i "s/>${taxon}$/${i}/g" ${loci_head_file}
+  sed -i "s/>${taxon}$/${i}/g" ${file_loci_head}
   i=$((i+1))
-done < ${taxa_file}
+done < ${file_taxa}
 
 # check there are no unidentified taxa
-test_v=`fgrep '>' ${loci_head_file} | head -n 1`
+test_v=`fgrep '>' ${file_loci_head} | head -n 1`
 [[ ! -z ${test_v} ]] && echo "ERROR: There are unidentified taxa in loci file"

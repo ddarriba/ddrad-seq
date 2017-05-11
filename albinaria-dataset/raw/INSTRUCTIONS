@@ -1,26 +1,26 @@
-1. Run scripts/initial_process.sh [PREFIX]
+1. Run scripts/initial_process.sh PREFIX
 
     Generates 'taxa' and '%.loci.head' files
 
-2. Run scripts/split_loci.sh [PREFIX]
+2. Run scripts/split_loci.sh PREFIX
 
     Generates per-locus MSA files in 'perlocus' directory
 
-3. Run scripts/gather_info.sh [PREFIX]
+3. Run scripts/gather_info.sh PREFIX
 
     Generates loci.desc file
 
-4. Generate taxa info (statInfo.r)
+4. Generate taxa info for all defined (or selected) filters
 
-    $ Rscript --vanilla scripts/stat_info.r
+    $ scripts/stat_info.sh PREFIX [filter]
 
-5. Generate process files
+5. Generate process files for all defined (or selected) filters
 
-    $ Rscript --vanilla scripts/create_proc.r [PREFIX]
+    $ scripts/create_proc.sh PREFIX [filter]
 
 6. Build the concatenated MSA
 
-    $ Rscript --vanilla scripts/build_supermatrix.r [PREFIX]
+    $ Rscript --vanilla scripts/build_supermatrix.r PREFIX
 
     Generates 2 files: supermatrix.[phy|fas] and supermatrix.parts
     If you want to generate several according to different filters, do not 

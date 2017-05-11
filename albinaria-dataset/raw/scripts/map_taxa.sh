@@ -1,5 +1,9 @@
-base_name=$1
-loci_file=${base_name}.loci.head
+#!/bin/bash
+
+source scripts/aux/common.sh
+
+#input
+[[ -f ${file_loci_head} ]] || { echo "Loci file missing"; exit; }
 
 list=
 locus_id=1
@@ -15,4 +19,4 @@ while read l; do
   else
     list+=" $l"
   fi
-done < $loci_file
+done < ${file_loci_head}

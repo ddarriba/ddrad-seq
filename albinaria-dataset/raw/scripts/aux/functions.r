@@ -40,7 +40,7 @@ parse_filter = function(fname, data)
 
 parse_loci_desc = function(fname)
 {
-  loci_desc = scan(descfile, 
+  loci_desc = scan(fname, 
                    list(id=0, ntax=0, tprop=0, len=0, 
                         nvar=0, ninf=0, vprop=0, gapy=0, 
                         tmap="", eftaxa=0, dups=""), 

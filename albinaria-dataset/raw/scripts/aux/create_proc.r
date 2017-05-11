@@ -1,37 +1,34 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-source("scripts/functions.r")
+source("scripts/aux/functions.r")
 
 #config
 USE_SYMLINK     = TRUE  # whether to use a symbolic link or an actual copy
 OVERRIDE_OUTPUT = TRUE
 
-#input files
-descfile = "loci.desc"
-taxafile = "taxa.desc"
-loci_dir = "loci"
-filtercfgfile="scripts/filter.cfg"
+stopifnot(length(args) == 6)
+
+# input files
+base_name       = args[1]
+data_dir        = args[2]
+file_loci_desc  = args[3]
+dir_loci        = args[4]
+file_filter_cfg = args[5]
+filter_name     = args[6]
 
 #output data
-output_base_dir = "../proc"
-output_loci_dir = "loci"
-
-# test if there is at least one argument: if not, return an error
-if (length(args) == 0) {
-  stop("Files prefix must be supplied", call.=FALSE)
-}
-
-prefix=args[1]
+output_base_dir = paste("../proc", data_dir, filter_name, sep='/')
+output_loci_dir = paste(output_base_dir, "loci", sep='/')
 
 #  id ntax  tprop   len  nvar   ninf  vprop   gapy   tmap eftaxa   dups
-data = scan(descfile, list(id=0, ntax=0, tprop=0, len=0, nvar=0, ninf=0, vprop=0, gapy=0, tmap="", eftaxa=0, dups=""), comment.char="#", quiet=TRUE)
+data = scan(file_loci_desc, list(id=0, ntax=0, tprop=0, len=0, nvar=0, ninf=0, vprop=0, gapy=0, tmap="", eftaxa=0, dups=""), comment.char="#", quiet=TRUE)
 
 n_loci = length(data$id)
 cat("Loci file contains", n_loci,"lines\n")
 
 # apply filters
-filter = parse_filter(filtercfgfile, data)
+filter = parse_filter(file_filter_cfg, data)
 
 cat("Original number of loci =", n_loci, "\n")
 cat("Loci with less than", filter$min_taxa, "taxa =", n_loci - sum(filter$taxa), "\n")
@@ -39,33 +36,37 @@ cat("Loci with less than", filter$min_var, "variable sites =", n_loci - sum(filt
 cat("Loci with less than", filter$min_inf, "informative sites =", n_loci - sum(filter$ninf), "\n")
 cat("Filtered number of loci =", sum(filter$all), "\n")
 
+cat("Output directory =", output_base_dir, "\n")
+cat("Output loci directory =", output_loci_dir, "\n")
+
 cat("\n\n")
 
-output_dir=paste(output_base_dir, output_loci_dir, sep="/")
-if (!dir.exists(output_base_dir)) dir.create(output_base_dir)
-if (!dir.exists(output_dir)) dir.create(output_dir)
+if (!dir.exists(output_base_dir)) dir.create(output_base_dir, recursive=TRUE)
+if (!dir.exists(output_loci_dir)) dir.create(output_loci_dir, recursive=TRUE)
 
-cat("Processing MSA files: output to",output_dir,"\n")
+cat("Processing MSA files: output to",output_loci_dir,"\n")
 k_id=0
-msa_dir=paste(getwd(), loci_dir, k_id, sep="/")
-output_msa_dir=paste(output_dir, k_id, sep="/")
+msa_dir=paste(getwd(), dir_loci, k_id, sep="/")
+output_msa_dir=paste(output_loci_dir, k_id, sep="/")
+
 cat("MSA DIR =",msa_dir, "\n")
+
 if (!dir.exists(output_msa_dir)) dir.create(output_msa_dir)
 
 for (id in 1:n_loci)
 {
   if (!(id%%1000))
   {
-    cat("... progress K =",k_id+1, "/", n_loci%/%1000, "\n")
     k_id = k_id+1
-    msa_dir = paste(getwd(), loci_dir, k_id, sep="/")
-    output_msa_dir=paste(output_dir, k_id, sep="/")
+    msa_dir = paste(getwd(), dir_loci, k_id, sep="/")
+    output_msa_dir=paste(output_loci_dir, k_id, sep="/")
     if (!dir.exists(output_msa_dir)) dir.create(output_msa_dir)
+    cat("... progress K =",k_id+1, "/", n_loci%/%1000, " : ", output_msa_dir, "\n")
   }
 
   if (filter$all[id])
   {
-    msa_filename = paste(prefix, "locus", id, sep=".")
+    msa_filename = paste(base_name, "locus", id, sep=".")
     output_msa_file = paste(output_msa_dir, msa_filename, sep="/")
 
     if (data$ntax[id] != data$eftaxa[id])

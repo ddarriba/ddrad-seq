@@ -1,21 +1,35 @@
 #!/usr/bin/env Rscript
 
 suppressMessages(library(gdata)) # contains write.fwf
-source("scripts/functions.r")
+source("scripts/aux/functions.r")
 
-#input files
-descfile="loci.desc"
-taxafile="taxa"
-filtercfgfile="scripts/filter.cfg"
+args = commandArgs(trailingOnly=TRUE)
 
-#output files
-taxadesc_file="taxa.desc"
+stopifnot(length(args) == 5)
+
+# input files
+file_loci_desc  = args[1]
+file_taxa       = args[2]
+file_filter_cfg = args[3]
+
+# output files
+file_taxa_desc   = args[4]
+dir_filter_stats = args[5]
+
+# output graphs
+img_taxa_per_locus=paste(dir_filter_stats, "taxa_per_locus.eps", sep='/')
+img_taxa_per_locus_filtered=paste(dir_filter_stats, "taxa_per_locus_filtered.eps", sep='/')
+img_varsites_per_locus=paste(dir_filter_stats, "varsites_per_locus.eps", sep='/')
+img_varsites_per_locus_filtered=paste(dir_filter_stats, "varsites_per_locus_filtered.eps", sep='/')
+img_gaps_per_locus=paste(dir_filter_stats, "gaps_per_locus.eps", sep='/')
+img_gaps_per_locus_filtered=paste(dir_filter_stats, "gaps_per_locus_filtered.eps", sep='/')
+img_taxa_rep=paste(dir_filter_stats, "img_taxa_representation.eps", sep='/')
 
 # read taxa names
-tnames = scan(taxafile, "", quiet=TRUE)
+tnames = scan(file_taxa, "", quiet=TRUE)
 
 # read loci description
-data   = parse_loci_desc(descfile)
+data   = parse_loci_desc(file_loci_desc)
 
 ntaxa  = length(tnames)
 nloci  = length(data$id)
@@ -35,7 +49,7 @@ taxadata$nloci   = sapply(1:ntaxa, function(x) sum(taxamap[,x]))
 taxadata$percent = 100 * taxadata$nloci / nloci
 
 #filter criteria
-filter = parse_filter(filtercfgfile, data)
+filter = parse_filter(file_filter_cfg, data)
 
 nloci.filtered = sum(filter$all)
 taxadata$nloci.filtered   = sapply(1:ntaxa, function(x) sum(taxamap[which(filter$all==1),x]))
@@ -46,15 +60,15 @@ cat("Filtered data contains", sum(filter$all), "loci\n")
 taxamatrix = matrix(unlist(taxadata), ncol=length(taxadata), byrow=FALSE)
 colnames(taxamatrix) = names(taxadata)
 
-write(x = paste("#", paste(names(taxadata), collapse=" ")), file = taxadesc_file, append = FALSE)
+write(x = paste("#", paste(names(taxadata), collapse=" ")), file = file_taxa_desc, append = FALSE)
 write.fwf(
   x     = taxamatrix,
-  file  = taxadesc_file,
+  file  = file_taxa_desc,
   quote = FALSE,
   rownames = FALSE,
   colnames = FALSE,
   append = TRUE)
-cat(">> Taxa description written to", taxadesc_file, "\n")
+cat(">> Taxa description written to", file_taxa_desc, "\n")
 
 # plot graphs
 
@@ -62,29 +76,29 @@ setEPS()
 
 # colors = c("red"), "yellow", "green", "violet", "orange", "blue", "pink", "cyan")
 
-postscript("taxa_per_locus.eps")
+postscript(img_taxa_per_locus)
 hist(100*data$tprop, breaks=25, col=c("cyan"), xlab="% of taxa", main="Percentage of taxa per locus")
 invisible(dev.off())
-postscript("taxa_per_locus.filtered.eps")
+postscript(img_taxa_per_locus_filtered)
 hist(100*data$tprop[filter$all==1], breaks=25, col=c("cyan"), xlab="% of taxa", main="Percentage of taxa per locus")
 invisible(dev.off())
-cat(">> Histogram taxa/locus dumped to taxa_per_locus.eps\n")
+cat(">> Histogram taxa/locus dumped to", img_taxa_per_locus, "\n")
 
-postscript("varsites_per_locus.eps")
+postscript(img_varsites_per_locus)
 hist(100*data$vprop, breaks=25, col=c("cyan"), xlab="% of variable sites", main="Percentage of variable sites per locus")
 invisible(dev.off())
-postscript("varsites_per_locus.filtered.eps")
+postscript(img_varsites_per_locus_filtered)
 hist(100*data$vprop[filter$all==1], breaks=25, col=c("cyan"), xlab="% of variable sites", main="Percentage of variable sites per locus")
 invisible(dev.off())
-cat(">> Histogram variable sites/locus dumped to varsites_per_locus.eps\n")
+cat(">> Histogram variable sites/locus dumped to", img_varsites_per_locus, "\n")
 
-postscript("gaps_per_locus.eps")
+postscript(img_gaps_per_locus)
 hist(100*data$gapy, breaks=25, col=c("cyan"), xlab="% of gaps", main="Gapyness per locus")
 invisible(dev.off())
-postscript("gaps_per_locus.filtered.eps")
+postscript(img_gaps_per_locus_filtered)
 hist(100*data$gapy[filter$all==1], breaks=25, col=c("cyan"), xlab="% of gaps", main="Gapyness per locus")
 invisible(dev.off())
-cat(">> Histogram gaps/locus dumped to gaps_per_locus.eps\n")
+cat(">> Histogram gaps/locus dumped to", img_gaps_per_locus, "\n")
 
 cat("\n  %taxa    n_loci   %loci    n_loci[F]   %loci[F]\n")
 cat("--------------------------------------------------\n")
@@ -120,7 +134,7 @@ cat("\n")
 taxamap = lapply(strsplit(data$tmap, ''), as.numeric)
 n_taxa = length(taxamap[[1]])
 
-postscript("taxa_representation.eps")
+postscript(img_taxa_rep)
 hist(taxadata$percent, breaks=25, col=c("orange"), xlab="Coverage (%)", main="Taxa representation")
 invisible(dev.off())
-cat(">> Histogram taxa representation dumped to taxa_representation.eps\n")
+cat(">> Histogram taxa representation dumped to", img_taxa_rep, "\n")
