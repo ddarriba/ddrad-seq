@@ -2,26 +2,34 @@
 
 # Usage:
 #
-#  eval_loci.sh [K_DIR] [RESULTS_DIR] [f]
+#  eval_loci.sh SUBDIR K_DIR
 #
+#    SUBDIR = data set subdirectory in data/
 #    K_DIR = 0..(n_kdirs-1)
-#    RESULTS_DIR = Output results directory
-#    f (optional) = Force recomputation
 #
 
-raxml_bin="raxmlHPC-SSE3"
-seedlist_file=scripts/seeds
-n_parsimony=50
-n_random=50
+# static configuration
+
+n_parsimony=5
+n_random=5
 n_replicates=$((n_parsimony + n_random))
+
+error_folder=error
+
+source scripts/aux/common.sh
 
 function move_results {
   # expect $1: execution name
 	# expect $2: output directory
   #echo "Appending $1 to $2"
   cat RAxML_bestTree.$1 >> $2
-  #echo Removing RAxML_*.$1
   rm RAxML_*.$1
+}
+
+function move_results {
+  # expect $1: execution name
+  mkdir -p ${error_folder}
+  mv RAxML_bestTree.$1 ${error_folder}
 }
 
 function process {
@@ -35,8 +43,8 @@ function process {
   raxml_cmd=$1
   in_path=$2
   out_path=$3
-  n_parsimony=$4
-  n_random=$5
+  n_parsimony_local=$4
+  n_random_local=$5
   log_path=$6
 
   if [[ $threads_per_process == "1" ]]; then
@@ -46,46 +54,55 @@ function process {
   fi
 
   # clean output
-  if [ -f $out_path ]; then
-    rm $out_path
-  fi
+  [ -f $out_path ] && rm $out_path
 
+  counter=1
   while read seed; do
     exec_name=`echo $in_path | rev | cut -d'.' -f1 | rev`
     exec_name+=.$seed
 		cmd="$raxml_cmd -s $in_path -n $exec_name -p $seed -m GTRGAMMA $cmd_args"
-    if [[ $n_parsimony > 0 ]]; then
-      n_parsimony=$((n_parsimony - 1))
+    if [[ $n_parsimony_local > 0 ]]; then
+      n_parsimony_local=$((n_parsimony_local - 1))
     else
       cmd="$cmd -d"
-      n_random=$((n_random - 1))
+      n_random_local=$((n_random_local - 1))
+      [ $n_random_local -lt 0 ] && break
     fi
-		#echo "$cmd"
-    eval $cmd >> $log_path && move_results $exec_name $out_path;
-	done < $seedlist_file
+
+	  echo -ne "$counter [$seed]        \r"
+
+    # clear output (if exists)
+    [ -f RAxML_info.${exec_name} ] && rm RAxML_*.${exec_name}
+    eval $cmd >> $log_path && move_results $exec_name $out_path || move_error $exec_name
+
+    counter=$((counter+1))
+	done < $file_seeds
 }
 
-[[ $1 == "" ]] && echo "Input dir missing" && exit
-[[ $2 == "" ]] && echo "Results dir missing" && exit
+loci_subset=$1
+[ -z ${loci_subset} ] && { echo "Loci subset missing"; exit; }
 
-test_bin=`which $raxml_bin`
-if [[ -f $test_bin ]]; then
-	datFolder=loci/$1
-	resFolder=$2/$1
+	datFolder=${dir_loci}/${loci_subset}
+	resFolder=${dir_results}/${loci_subset}
   force_recomp=$3
 	logFolder=log/$1
   mkdir -p $resFolder || exit
   mkdir -p $logFolder || exit
+
+  n_loci=`ls ${datFolder}/${base_name}.locus.* | wc -l`
+
+  echo "Found $n_loci samples in $datFolder"
+
   datFN=`echo $datFolder | rev | cut -d'/' -f1 | rev`
-  echo "$seedlist" > $resFolder/$datFN.seeds
+
+  echo "$seedlist" > $resFolder/${loci_subset}.seeds
 	for datFile in $datFolder/*; do
 		datName=$(basename "$datFile")
-    if [ "$force_recomp" == "f" -o ! -f $resFolder/$datName.trees ]; then
+    file_trees="$resFolder/$datName.trees"
+    [ -f $file_trees ] && n_trees=`wc -l $file_trees | cut -d' ' -f1` || n_trees=0
+    if [ "$force_recomp" == "f" -o ${n_trees} != ${n_replicates} ]; then
   		echo `date` "Processing $datFile -> $resFolder/$datName";
-  		process $raxml_bin $datFile "$resFolder/$datName.trees" $n_parsimony $n_random "$logFolder/$datName.log";
+  		process $RAXML_BIN $datFile "$resFolder/$datName.trees" $n_parsimony $n_random "$logFolder/$datName.log";
     fi
 	done;
-else
-	echo "Error: Binary $raxml_bin does not exist."
-fi
 
