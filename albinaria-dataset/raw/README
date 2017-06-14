@@ -29,12 +29,18 @@
     loci.desc   Loci statistics
 
   Scripts:
+
+    initial_process.sh  Creates the loci headers file and taxa names files
+
     gather_info.sh    Creates the loci description file
       Input: per-locus files (loci directory)
       Output: loci.desc
+      Warning... this script may take a long time to run!
+
     map_taxa.sh       Maps the taxa per-locus (order as in 'taxa' file)
       Input: Albinaria98inds_c91d6m4p3.loci.head
       Output: Map of taxa per-locus (1: present 0: absent)
+
     split_loci.sh     Creates and populates the 'loci' directory structure
       Input: Albinaria98inds_c91d6m4p3.loci
       Output: Per-locus MSAs in 'loci' directory

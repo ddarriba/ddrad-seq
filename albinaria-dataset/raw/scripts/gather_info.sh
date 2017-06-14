@@ -1,5 +1,11 @@
 #!/bin/bash
-# gather per-locus info from .loci file
+# This script gathers per-locus info from .loci file
+# 
+# %.loci.head file contains the headers of %.loci but taxa names are
+# converted to the indices in 'taxa' file.
+#
+# Run: gather_info.sh [DATA_DIR]
+# 
 
 source scripts/aux/common.sh
 
@@ -19,6 +25,21 @@ mkdir -p $dir_loci
 
 max_taxa=`cat ${file_taxa} | wc -l`
 
+header_lines_count=13 # count of lines printed above
+
+loci_sections=`fgrep -n "//" $file_loci | cut -d':' -f 1`
+cur_line=1
+locus_id=1
+n_loci=`echo $loci_sections | wc -w`
+
+if [ -f ${file_loci_desc} ]; then
+  # check if file is complete
+  loci_desc_lines=`cat ${file_loci_desc} | wc -l`
+  [[ $((loci_desc_lines - header_lines_count)) == ${n_loci} ]] && \
+    { echo "Loci desc file already exist"; exit; } || \
+    { echo "Loci desc file contains wront number of lines"; }
+fi
+
 echo "# id:     locus index" > $file_loci_desc
 echo "# ntax:   number of taxa" >> $file_loci_desc
 echo "# tprop:  proportion of taxa (ntax/98)" >> $file_loci_desc
@@ -33,10 +54,6 @@ echo "# eftax:  effective number of taxa" >> $file_loci_desc
 echo "# dups:   list of duplicated sequences" >> $file_loci_desc
 printf "#%4s %4s %6s %5s %5s %6s %6s %6s %6s %6s %6s\n" id ntax tprop len nvar ninf vprop gapy tmap eftaxa dups >> $file_loci_desc
 
-loci_sections=`fgrep -n "//" $file_loci | cut -d':' -f 1`
-cur_line=1
-locus_id=1
-n_loci=`echo $loci_sections | wc -w`
 for locus_end in $loci_sections; do
   locus_file=${dir_loci}/$((locus_id/1000))/${base_name}.locus.${locus_id}
 
