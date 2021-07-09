@@ -16,14 +16,14 @@ parse_filter = function(fname, data)
   filter_cfg$taxa = data$eftaxa >= filter_cfg$min_taxa
 
   # build filter by number of variable sites
-  if (filter_cfg$min_var == -1)
-    filter_cfg$nvar = data$nvar   >= log2(data$eftaxa)
+  if (filter_cfg$min_var < 0)
+    filter_cfg$nvar = data$nvar   >= 1
   else
     filter_cfg$nvar = data$nvar   >= filter_cfg$min_var
 
   # build filter by number of informative sites
-  if (filter_cfg$min_inf == -1)
-    filter_cfg$ninf = data$ninf   >= log2(data$eftaxa)
+  if (filter_cfg$min_inf < 0)
+    filter_cfg$ninf = data$ninf   >= 1
   else
     filter_cfg$ninf = data$ninf   >= filter_cfg$min_inf
 
@@ -40,7 +40,7 @@ parse_filter = function(fname, data)
 
 parse_loci_desc = function(fname)
 {
-  loci_desc = scan(descfile, 
+  loci_desc = scan(fname, 
                    list(id=0, ntax=0, tprop=0, len=0, 
                         nvar=0, ninf=0, vprop=0, gapy=0, 
                         tmap="", eftaxa=0, dups=""), 
