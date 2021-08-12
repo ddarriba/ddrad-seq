@@ -21,9 +21,9 @@ From R:
 
   snplist = snp.select(all_loci, snp.score.nonmissing)
   
-  # STEP 4: call snp.mat to build the snp matrix (also applies a min_taxa filter, 3 by default). Requires the taxa file
+  # STEP 4: call snp.mat to build the snp matrix. It also applies a filter, (min_taxa=3,min_inf=1 by default). Requires the taxa file
 
-  snpmatrix <- snp.mat(snplist, "TAXA_FILENAME", 4)
+  snpmatrix <- snp.mat(snplist, "TAXA_FILENAME", "FILTER_FILENAME")
   
   # STEP 5: dump the SNP MSA in "fasta" or "phylip" format
   

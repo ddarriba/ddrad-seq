@@ -46,30 +46,54 @@ snp.select <- function(loci_list, score_fun)
   snp_list = list()
   for (i in 1:length(loci_list))
   {
-     missing_data = NULL
-     lmat = loci_list[[i]]
-     if (is.null(lmat)) next
+     snp_list[[i]] = list()
+     snp_list[[i]]$included = loci_list[[i]]$included
+     if (!loci_list[[i]]$included) next
 
-          
+     missing_data = NULL
+     lmat = loci_list[[i]]$data
+
+     stopifnot(!is.null(lmat))
+
+     snp_list[[i]]$var_count = loci_list[[i]]$var_count
      if (is.null(dim(lmat)))
      {
-       snp_list[[i]] = lmat
+       snp_list[[i]]$data = lmat
      }
      else
      {
        missing_data = score_fun(lmat)
-       snp_list[[i]] = lmat[,which(missing_data == min(missing_data))[1]]
+       snp_list[[i]]$data = lmat[,which(missing_data == min(missing_data))[1]]
      }
+     snp_list[[i]]$taxa_count = length(snp_list[[i]]$data)
   }
   snp_list
 }
 
 # create snp matrix
-snp.mat <- function(snp_list, taxa_filepath, min_taxa=3)
+snp.mat <- function(snp_list, taxa_filepath, filter_filename=NULL)
 {
+  if (!is.null(filter_filename) && file.exists(filter_filename))
+  {
+    values = scan(filter_filename,
+                list(field="", value=0), 
+                blank.lines.skip=TRUE,
+                comment.char="#",
+                quiet=TRUE)
+    min_taxa = values$value[which(values$field == "min_taxa")]
+    min_var  = values$value[which(values$field == "min_var")]
+    min_inf  = values$value[which(values$field == "min_inf")]
+  }
+  else
+  {
+    min_var  = 1
+    min_inf  = 1
+    min_taxa = 3
+  }
   taxa_names = scan(taxa_filepath, "", quiet=TRUE)
   taxa_count = length(taxa_names)
-  snp_count = sum(unlist(lapply(snp_list, function(x) length(x)>=min_taxa)))
+  snp_count = sum(unlist(lapply(snp_list, function(x) 
+                  x$included && x$taxa_count>=min_taxa && x$var_count>=min_var && x$var_count>=min_inf)))
   
   if (DEBUG)
     cat(snp_count, "SNPs found and", taxa_count, "taxa\n")
@@ -80,9 +104,10 @@ snp.mat <- function(snp_list, taxa_filepath, min_taxa=3)
   col_id = 1
   for (i in 1:length(snp_list))
   {
-    if ((!is.null(snp_list[[i]])) && (length(snp_list[[i]]) >= min_taxa))
+    include_snp = snp_list[[i]]$included && snp_list[[i]]$taxa_count >= min_taxa && snp_list[[i]]$var_count >= min_var && snp_list[[i]]$var_count >= min_inf
+    if (include_snp)
     {
-      snp_matrix[names(snp_list[[i]]),col_id] = unlist(snp_list[[i]])
+      snp_matrix[names(snp_list[[i]]$data),col_id] = unlist(snp_list[[i]]$data)
 #      colnames(snp_matrix)[col_id] = i
       col_id = col_id+1
     }
@@ -126,7 +151,7 @@ snp.dumpmatrix <- function(snp_matrix, output_file, format)
   }
 }
 
-read.loci <- function(filepath)
+read.loci <- function(filepath, only_informative=TRUE)
 {
   loci_file = file(filepath, "r")
   taxa_count = 0
@@ -138,6 +163,11 @@ read.loci <- function(filepath)
   all_loci = NULL
   include_locus = TRUE
       
+  if (only_informative)
+    pattern = '\\*'
+  else
+    pattern = '\\*|-'
+    
   while(TRUE) {
     line = readLines(loci_file, n=1)
     if ( length(line) == 0 )
@@ -165,27 +195,28 @@ read.loci <- function(filepath)
       metainfo = substring(line, first=seq_start, last=seq_start+loci_len-1)
       loci_id = as.integer(substring(line, first=seq_start+loci_len+1))
       
-      info_sites=gregexpr(pattern='\\*', metainfo)[[1]]
+      var_sites=gregexpr(pattern=pattern, metainfo)[[1]]
 
-      if (info_sites[1] < 0)
+      if (var_sites[1] < 0)
       {
         # locus is not suitable
-        info_sites_count = 0
+        var_sites = 0
         include_locus = FALSE
+        var_sites_count = 0
       }
       
       if (include_locus)
       {
         # locus is suitable
-	info_sites_count = length(info_sites)
+	var_sites_count = length(var_sites)
 
         loci = matrix(sequences, ncol=loci_len, byrow=TRUE)	
         rownames(loci) = taxa
 
         if (DEBUG)
         {
-          print(loci[,info_sites])
-          cat(loci_id, taxa_count, loci_len, nchar(metainfo), "INFO: ", info_sites_count,"\n")
+          print(loci[,var_sites])
+          cat(loci_id, taxa_count, loci_len, nchar(metainfo), "INFO: ", var_sites_count,"\n")
           cat("include locus",loci_id,taxa_count,"\n")
         }
       }
@@ -195,8 +226,20 @@ read.loci <- function(filepath)
         if (DEBUG)
           cat("skip locus",loci_id,"\n")
       }
-      
-      all_loci[[loci_id]] = loci[,info_sites]
+
+      all_loci[[loci_id]] = list()      
+      if (include_locus)
+      {
+        all_loci[[loci_id]]$included = TRUE
+        all_loci[[loci_id]]$var_count = var_sites_count
+        all_loci[[loci_id]]$data = loci[,var_sites]
+      }
+      else
+      {
+        all_loci[[loci_id]]$included = FALSE
+        all_loci[[loci_id]]$var_count = 0
+        all_loci[[loci_id]]$data = NULL
+      }
  
       # reset
       taxa_count=0
