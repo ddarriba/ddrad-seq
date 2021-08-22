@@ -12,20 +12,30 @@ From R:
   # STEP 2: call read.loci function to read the %.loci file
 
   all_loci = read.loci("LOCI_FILENAME")
+
+  # STEP 3: build the filter according to a minimum number of unique sequences, variable and parsimony informative sites
+  # Note: min_var = -1 or min_inf = -1 means log2(number_of_taxa) for each locus instead of a fixed amount
   
-  # STEP 3: call snp.select to select one SNP per locus.
+  snp_filter = snp.filter(all_loci, min_taxa, min_var, min_inf)
+  
+  # STEP 4: call snp.select to select one SNP per locus.
   # there are 3 score functions:
   #   snp.score.first      : selects the first SNP
   #   snp.score.nonmissing : selects the first SNP with the fewest missing characters
   #   snp.score.all        : penalizes both missing data and heterozigous characters (and other ambiguities)
 
-  snplist = snp.select(all_loci, snp.score.nonmissing)
+  snp_list = snp.select(all_loci, snp.score.nonmissing)
   
-  # STEP 4: call snp.mat to build the snp matrix. It also applies a filter, (min_taxa=3,min_inf=1 by default). Requires the taxa file
+  # STEP 5: call snp.mat to build the snp matrix.
+  # OPTIONALLY you can add the filter built in step 3
 
-  snpmatrix <- snp.mat(snplist, "TAXA_FILENAME", "FILTER_FILENAME")
+  snp_matrix <- snp.mat(snp_list, snp_filter)
   
-  # STEP 5: dump the SNP MSA in "fasta" or "phylip" format
+  # STEP 6: dump the SNP MSA in "fasta" or "phylip" format
   
-  snp.dumpmatrix(snpmatrix, "OUTPUT_FILENAME", "fasta") 
+  write.msa(snpmatrix, "OUTPUT_FILENAME", "fasta") 
+  
+  # STEP 7: dump the loci matrix according to the SNP filter
+  # IN PROGRESS...
+  write.msa(all_loci,  "OUTPUT_FILENAME", "fasta", snp_filter)
   
