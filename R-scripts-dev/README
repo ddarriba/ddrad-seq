@@ -30,12 +30,16 @@ From R:
   # OPTIONALLY you can add the filter built in step 3
 
   snp_matrix <- snp.mat(snp_list, snp_filter)
+
+  # STEP 6: apply the same filter to the loci matrix
   
-  # STEP 6: dump the SNP MSA in "fasta" or "phylip" format
+  loci_matrix <- loci.mat(loci_list, snp_filter)
+    
+  # STEP 7: dump the SNP MSA in "fasta" or "phylip" format
   
-  write.msa(snpmatrix, "OUTPUT_FILENAME", "fasta") 
+  write.msa(snp_matrix, "OUTPUT_FILENAME", "fasta") 
   
-  # STEP 7: dump the loci matrix according to the SNP filter
-  # IN PROGRESS...
-  write.msa(all_loci,  "OUTPUT_FILENAME", "fasta", snp_filter)
+  # STEP 8: dump the loci matrix according to the SNP filter
+
+  write.msa(loci_matrix,  "OUTPUT_FILENAME", "fasta")
   
