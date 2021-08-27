@@ -48,6 +48,8 @@ snp.select <- function(loci_list, score_fun, informative_only=FALSE)
   snp_list$included = rep(0, loci_list$loci_count)
   snp_list$data = vector(mode="list", length=loci_list$loci_count)
   
+  pb = txtProgressBar(min = 0, max = loci_list$loci_count, initial = 0)
+
   for (i in 1:loci_list$loci_count)
   {
      snp_list$data[[i]] = list()
@@ -87,6 +89,8 @@ snp.select <- function(loci_list, score_fun, informative_only=FALSE)
      snp_list$data[[i]]$uniq_count = loci_list$data[[i]]$uniq_count
      stopifnot(snp_list$data[[i]]$taxa_count == loci_list$data[[i]]$taxa_count)
      stopifnot(snp_list$data[[i]]$taxa_count >= snp_list$data[[i]]$uniq_count)
+     
+     setTxtProgressBar(pb,i)
   }
   snp_list$taxa = loci_list$taxa
   snp_list$loci_count = loci_list$loci_count
@@ -100,18 +104,22 @@ snp.filter <- function(loci_list, min_taxa, min_var, min_inf)
   lmin_var = min_var
   lmin_inf = min_inf
   
+  pb = txtProgressBar(min = 0, max = loci_count, initial = 0)
+
   for (i in 1:loci_count)
   {
-    if (min_var == -1) lmin_var = log2(loci_list$data[[i]]$taxa_count)
-    if (min_inf == -1) lmin_inf = log2(loci_list$data[[i]]$taxa_count)
-    filter_array[i] = loci_list$data[[i]]$taxa_count >= min_taxa && 
+    if (min_var == -1) lmin_var = log2(loci_list$data[[i]]$uniq_count)
+    if (min_inf == -1) lmin_inf = log2(loci_list$data[[i]]$uniq_count)
+    filter_array[i] = loci_list$data[[i]]$uniq_count >= min_taxa && 
                       loci_list$data[[i]]$var_count  >= lmin_var && 
-                      loci_list$data[[i]]$var_count  >= lmin_inf
+                      loci_list$data[[i]]$inf_count  >= lmin_inf
+
+    setTxtProgressBar(pb,i)
   }
+  cat("\n")
   
   filter_array
 }
-
 
 # create snp matrix
 snp.mat <- function(snp_list, snp_filter=NULL)
@@ -131,6 +139,8 @@ snp.mat <- function(snp_list, snp_filter=NULL)
   snp_matrix$data = matrix(rep("-", taxa_count*snp_count), ncol=snp_count)
   rownames(snp_matrix$data) = taxa_names
 
+  pb = txtProgressBar(min = 0, max = length(snp_filter), initial = 0)
+
   col_id = 1
   for (i in 1:length(snp_filter))
   {
@@ -138,7 +148,10 @@ snp.mat <- function(snp_list, snp_filter=NULL)
       next
     snp_matrix$data[names(snp_list$data[[i]]$sequences),col_id] = unlist(snp_list$data[[i]]$sequences)
     col_id = col_id+1
+    
+    setTxtProgressBar(pb,i)
   }
+  cat("\n")
   
   snp_matrix$start = 1
   snp_matrix$end = snp_count
@@ -167,7 +180,9 @@ loci.mat <- function(loci_list, snp_filter=NULL)
   for (i in 1:loci_list$loci_count)
     if (snp_filter[i])
       matrix_length = matrix_length + loci_list$data[[i]]$length
-        
+  
+  cat("Building empty matrix and data:",taxa_count, matrix_length, "\n")
+  stopifnot(FALSE)
   loci_matrix$data = matrix(rep("-", taxa_count*matrix_length), ncol=matrix_length)
   loci_matrix$start = rep(0, snp_count)
   loci_matrix$end   = rep(0, snp_count)
@@ -175,6 +190,9 @@ loci.mat <- function(loci_list, snp_filter=NULL)
   
   rownames(loci_matrix$data) = taxa_names
 
+  cat("Start dumping\n")
+  pb = txtProgressBar(min = 0, max = loci_list$loci_count, initial = 0)
+  
   col_id = 1
   next_part = 1
   for (i in 1:loci_list$loci_count)
@@ -190,10 +208,125 @@ loci.mat <- function(loci_list, snp_filter=NULL)
     
     next_part = next_part + 1
     col_id = col_id+len
+    
+    setTxtProgressBar(pb,i)
   }
+  cat("\n")
 
   loci_matrix$parts_count = snp_count
   loci_matrix
+}
+
+write.taxa <- function(loci_list, output_file)
+{
+  taxa_count   = length(loci_list$taxa)
+  
+  if (file.exists(output_file)) {
+    file.remove(output_file)
+  }
+  
+  for (i in 1:taxa_count)
+  {
+    write(
+        x      = loci_list$taxa[i],
+        file   = output_file,
+        append = TRUE)
+  }
+}
+
+write.snpdata <- function(loci_list, output_file)
+{
+  loci_count   = loci_list$loci_count
+  
+  if (file.exists(output_file)) {
+    file.remove(output_file)
+  }
+  
+  for (i in 1:loci_count)
+  {
+    write(
+        x      = paste(loci_list$data[[i]]$locus_id,
+                       loci_list$data[[i]]$taxa_count,
+                       loci_list$data[[i]]$uniq_count,
+                       loci_list$data[[i]]$var_count,
+                       loci_list$data[[i]]$inf_count, sep=" "),
+        file   = output_file,
+        append = TRUE)
+  }
+}
+
+write.msa.lowmem <- function(loci_list, snp_filter, output_file)
+{
+  if (file.exists(output_file)) {
+    file.remove(output_file)
+  }
+
+  parts_file = paste(output_file,"parts",sep=".")
+  # dump partitions file
+  if (file.exists(parts_file)) {
+    file.remove(parts_file)
+  }
+  
+  filter_count = sum(snp_filter)
+  loci_count = loci_list$loci_count
+  
+  part_start = rep(0, filter_count)
+  part_end   = rep(0, filter_count)
+  part_id    = rep(0, filter_count)
+  
+  ef_id = 1
+  cur_count = 1
+  for (locus_id in which(snp_filter))
+  {
+    part_start[ef_id] = cur_count
+    cur_count = cur_count + loci_list$data[[locus_id]]$length
+    part_end[ef_id] = cur_count - 1
+    part_id[ef_id] = loci_list$data[[locus_id]]$locus_id
+    
+    write(
+      x      = paste("PART", part_id[ef_id],"=",part_start[ef_id],"-",part_end[ef_id], sep=""),
+      file   = parts_file,
+      append = TRUE)
+      
+    ef_id = ef_id + 1
+  }
+  cat("Partitions dumped to", parts_file,"in RAxML format\n")
+  
+  i=1
+  for (tname in loci_list$taxa)
+  {
+    cat("Dump",tname,i,"/",length(loci_list$taxa),"\n")
+    i=i+1
+    
+    write(
+      x      = paste(">",tname,sep=""),
+      file   = output_file,
+      append = TRUE)
+      
+    sequence = ""
+    for (locus_id in which(snp_filter))
+    {
+      if (tname %in% rownames(loci_list$data[[locus_id]]$sequences))
+      {
+         sequence = paste(sequence,
+                          paste(loci_list$data[[locus_id]]$sequences[tname,], collapse=""),
+                          sep="")
+      }
+      else
+      {
+         sequence = paste(sequence,
+                          paste(rep("-", loci_list$data[[locus_id]]$length), collapse=""),
+                          sep="")
+      }
+    }
+  cat("Dump SEQUENCE",tname,nchar(sequence),"\n")
+  write(
+        x      = sequence,
+        file   = output_file,
+        append = TRUE)
+  }
+  
+  cat("MSA dumped to",output_file,"in FASTA format\n")
 }
 
 write.msa <- function(snp_matrix, output_file, format="fasta")
@@ -255,7 +388,7 @@ write.msa <- function(snp_matrix, output_file, format="fasta")
 }
 
 
-read.loci <- function(filepath, collapse_identical_sequences=TRUE)
+read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=TRUE)
 {
   loci_file = file(filepath, "r")
   on.exit(close(loci_file))
@@ -280,23 +413,27 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE)
     line = readLines(loci_file, n=1)
     if ( length(line) == 0 )
       break
-      
+
     if (grepl('^>', line))
     {
       # sequence
+      if (n_as_gaps)
+        line = gsub("N|n","-",line)
+        
       lseq_count = lseq_count + 1
             
       pieces=strsplit(line, "[ |\t]+")
       ltaxa[lseq_count] = substring(pieces[[1]][1], first=2)
-
       sequences[lseq_count] = pieces[[1]][2]
+
       lh = strhash(sequences[lseq_count])
-      
+
       if (lseq_count == 1)
       {
          # first line
          locus_length = nchar(sequences[lseq_count])
          seq_start = gregexpr(pattern=sequences[lseq_count],line)[[1]][1]
+
          line_end = nchar(line)
          lhash[1] = lh
          luniq_count = 1
@@ -334,19 +471,27 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE)
       locus_id = as.integer(strsplit(line, "\\|")[[1]][2])
       
       loci_all_count = loci_all_count + 1
-      if (loci_all_count %% 1000 == 0) print(loci_all_count)
+      if (loci_all_count %% 1000 == 0)
+      {
+        cat("=")
+        if (loci_all_count %% 20000 == 0)
+          cat(" ", loci_all_count,"/?\n")
+      }
 
       inf_sites=gregexpr(pattern='\\*', metainfo)[[1]]
       if (inf_sites[1] > -1)
         inf_count = length(inf_sites)
       else
         inf_count = 0
+      stopifnot(max(inf_sites) <= locus_length)
+
       var_sites=gregexpr(pattern='\\-', metainfo)[[1]]
       if (var_sites[1] > -1)
         var_count = length(var_sites)
       else
         var_count = 0
       var_count = var_count + inf_count
+      stopifnot(max(var_sites) <= locus_length)
 
       # .. compose entry
       loci_list$data[[loci_all_count]] = list()
@@ -371,7 +516,7 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE)
       colnames(loci_list$data[[loci_all_count]]$sequences) = cn
       
       gtaxa = unique(c(gtaxa, ltaxa))
-      
+
       # .. reset
       sequences = c()
       ltaxa = c()
@@ -382,7 +527,7 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE)
     }
   }
 
-  cat("Read", loci_all_count, "loci\n")
+  cat("\nRead", loci_all_count, "loci\n")
   if (DEBUG)
     cat("Close File\n")
   

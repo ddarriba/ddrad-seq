@@ -31,15 +31,11 @@ From R:
 
   snp_matrix <- snp.mat(snp_list, snp_filter)
 
-  # STEP 6: apply the same filter to the loci matrix
-  
-  loci_matrix <- loci.mat(loci_list, snp_filter)
-    
-  # STEP 7: dump the SNP MSA in "fasta" or "phylip" format
+  # STEP 6: dump the SNP MSA in "fasta" or "phylip" format
   
   write.msa(snp_matrix, "OUTPUT_FILENAME", "fasta") 
-  
-  # STEP 8: dump the loci matrix according to the SNP filter
 
-  write.msa(loci_matrix,  "OUTPUT_FILENAME", "fasta")
+  # STEP 7: dump the loci matrix and partitions file according to the SNP filter in (so far) FASTA format
+  #         Warning: This function may take a long time in order to keep low memory usage
   
+  write.msa.lowmem(loci_list, "OUTPUT_FILENAME", snp_filter)  
