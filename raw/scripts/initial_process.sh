@@ -12,15 +12,21 @@ source scripts/aux/common.sh
 
 # input
 [[ -f ${file_loci} ]] || { echo "Loci file missing"; exit; }
-[[ -f ${file_phylip} ]] || { echo "PHYLIP file missing"; exit; }
 
 # output
 [[ -z ${file_taxa} ]] && { echo "Taxa file undefined"; exit; }
 [[ -z ${file_loci_head} ]] && { echo "Loci head file undefined"; exit; }
 
 #generate taxa file
-echo "Generate taxa file"
-cut -d' ' -f 1 ${file_phylip} | tail -n +2 > ${file_taxa}
+if [[ ! -f ${file_taxa} ]]; then
+  echo "Generate taxa file"
+  if [[ -f ${file_phylip} ]]; then
+    cut -d' ' -f 1 ${file_phylip} | tail -n +2 > ${file_taxa}
+  else
+    echo "PHYLIP or taxa files missing"
+    exit
+  fi
+fi
 
 n_taxa=`cat ${file_taxa} | wc -l`
 echo "... there are ${n_taxa} taxa"

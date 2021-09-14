@@ -38,4 +38,4 @@ From R:
   # STEP 7: dump the loci matrix and partitions file according to the SNP filter in (so far) FASTA format
   #         Warning: This function may take a long time in order to keep low memory usage
   
-  write.msa.lowmem(loci_list, "OUTPUT_FILENAME", snp_filter)  
+  write.msa.lowmem(loci_list, snp_filter, "OUTPUT_FILENAME")

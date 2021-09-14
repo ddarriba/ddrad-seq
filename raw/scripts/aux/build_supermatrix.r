@@ -27,6 +27,14 @@ if (FORMAT == 0) {
 output_file_msa = paste(output_base_dir, file_msa, sep='/')
 output_file_parts = paste(output_base_dir, file_parts, sep='/')
 
+cat("Base name:      ", base_name, "\n")
+cat("Data directory: ", data_dir, "\n")
+cat("Loci desc file: ", file_loci_desc, "\n")
+cat("Taxa file:      ", file_taxa, "\n")
+cat("Loci directory: ", dir_loci, "\n")
+cat("Filter file:    ", file_filter, "\n")
+cat("Output:         ", output_file_msa, "\n")
+
 tnames = scan(file_taxa, "", quiet=TRUE)
 
 if (file.exists(output_file_msa) || file.exists(output_file_parts))
@@ -108,9 +116,9 @@ for (j in 1:n_alltaxa)
       msa_seqs = length(msa_data)/2
       stopifnot(msa_seqs == data$ntax[id])
 
-      if (curname %in% msa_data[1:msa_seqs*2-1])
+      if (fastaname %in% msa_data[1:msa_seqs*2-1])
       {
-        locus_index = which(msa_data[1:msa_seqs*2-1] == curname)*2
+        locus_index = which(msa_data[1:msa_seqs*2-1] == fastaname)*2
         seq = strsplit(msa_data[locus_index], '')[[1]]
         curseq[1, locus_ini:locus_end] = seq    
       }

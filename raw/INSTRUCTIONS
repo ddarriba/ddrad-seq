@@ -20,7 +20,7 @@
 
 6. Build the concatenated MSA
 
-    $ Rscript --vanilla scripts/build_supermatrix.r PREFIX
+    $ scripts/build_supermatrix.sh PREFIX
 
     Generates 2 files: supermatrix.[phy|fas] and supermatrix.parts
     If you want to generate several according to different filters, do not 

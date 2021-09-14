@@ -69,6 +69,7 @@ for (id in 1:n_loci)
     msa_filename = paste(base_name, "locus", id, sep=".")
     output_msa_file = paste(output_msa_dir, msa_filename, sep="/")
 
+    cat(msa_filename, data$id[id], data$ntax[id], data$eftax[id], "\n")
     if (data$ntax[id] != data$eftaxa[id])
     {
       msa_filename = paste(msa_filename,"reduced", sep=".")

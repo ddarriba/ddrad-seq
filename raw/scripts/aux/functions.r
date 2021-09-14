@@ -16,14 +16,14 @@ parse_filter = function(fname, data)
   filter_cfg$taxa = data$eftaxa >= filter_cfg$min_taxa
 
   # build filter by number of variable sites
-  if (filter_cfg$min_var < 0)
-    filter_cfg$nvar = data$nvar   >= 1
+  if (filter_cfg$min_var == -1)
+    filter_cfg$nvar = data$nvar   >= log2(data$eftaxa)
   else
     filter_cfg$nvar = data$nvar   >= filter_cfg$min_var
 
   # build filter by number of informative sites
-  if (filter_cfg$min_inf < 0)
-    filter_cfg$ninf = data$ninf   >= 1
+  if (filter_cfg$min_inf == -1)
+    filter_cfg$ninf = data$ninf   >= log2(data$eftaxa)
   else
     filter_cfg$ninf = data$ninf   >= filter_cfg$min_inf
 

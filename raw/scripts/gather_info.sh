@@ -37,7 +37,7 @@ if [ -f ${file_loci_desc} ]; then
   loci_desc_lines=`cat ${file_loci_desc} | wc -l`
   [[ $((loci_desc_lines - header_lines_count)) == ${n_loci} ]] && \
     { echo "Loci desc file already exist"; exit; } || \
-    { echo "Loci desc file contains wront number of lines"; }
+    { echo "Loci desc file contains wrong number of lines"; }
 fi
 
 echo "# id:     locus index" > $file_loci_desc
@@ -61,54 +61,54 @@ for locus_end in $loci_sections; do
 
   # process locus_file with raxml
   $RAXML_BIN -f c -s ${locus_file} -m GTRGAMMA -n $RAXML_EXECNAME > /dev/null
+  if [ -f ${RAXML_file_loci_desc} ]; then
 
-  [[ -f ${RAXML_file_loci_desc} ]] || { echo "RAxML output ${RAXML_file_loci_desc} does not exist"; exit; }
+    identical_seqs=`grep "WARNING:" $RAXML_file_loci_desc | grep "exactly identical" | cut -d' ' -f4,6`
+    ndups=`echo $identical_seqs | wc -w`
+    dups="0,0"
+    for tname in $identical_seqs; do
+      tid=`grep -n "^${tname}$" $file_taxa | cut -d':' -f 1`
+      dups="$dups,$tid"
+    done
 
-  identical_seqs=`grep "WARNING:" $RAXML_file_loci_desc | grep "exactly identical" | cut -d' ' -f4,6`
-  ndups=`echo $identical_seqs | wc -w`
-  dups="0,0"
-  for tname in $identical_seqs; do
-    tid=`grep -n "^${tname}$" $file_taxa | cut -d':' -f 1`
-    dups="$dups,$tid"
-  done
+    rm $RAXML_file_loci_desc
 
-  rm $RAXML_file_loci_desc
+    n_taxa=$((locus_end-cur_line))
+    eftaxa=$((n_taxa - ndups/2))
 
-  n_taxa=$((locus_end-cur_line))
-  eftaxa=$((n_taxa - ndups/2))
+    sed -n "${cur_line},$((locus_end))p" $file_loci | rev > $file_tmp
 
-  sed -n "${cur_line},$((locus_end))p" $file_loci | rev > $file_tmp
+    n_sites=`sed "${cur_line}q;d" ${file_loci} | xargs | cut -d' ' -f2 | wc -c`
+    n_sites=$((n_sites - 1))
+    varsites_line=`sed "${locus_end}q;d" ${file_loci}`
+    n_var=$((`echo "${varsites_line//[^'-']}" | wc -c`-1))
+    n_inf=$((`echo "${varsites_line//[^'*']}" | wc -c`-1))
+    n_var=$((n_var+n_inf))
+    var_prop=`echo "scale=4; $n_var/$n_sites" | bc -l`
+    taxa_prop=`echo "scale=4; $n_taxa/$max_taxa" | bc -l`
 
-  n_sites=`sed "${cur_line}q;d" ${file_loci} | xargs | cut -d' ' -f2 | wc -c`
-  n_sites=$((n_sites - 1))
-  varsites_line=`sed "${locus_end}q;d" ${file_loci}`
-  n_var=$((`echo "${varsites_line//[^'-']}" | wc -c`-1))
-  n_inf=$((`echo "${varsites_line//[^'*']}" | wc -c`-1))
-  var_prop=`echo "scale=4; ($n_var + $n_inf)/$n_sites" | bc -l`
-  taxa_prop=`echo "scale=4; $n_taxa/$max_taxa" | bc -l`
-
-  taxa_inc=`sed -n ${cur_line},$((locus_end-1))p ${file_loci_head} | sort -g`
+    taxa_inc=`sed -n ${cur_line},$((locus_end-1))p ${file_loci_head} | sort -g`
   
-  #TODO: check that words in taxa_inc equals number of taxa
-  cnt=1
-  tmap=
-  for i in $taxa_inc; do
-    for j in `seq $((cnt+1)) $i`; do
+    #TODO: check that words in taxa_inc equals number of taxa
+    cnt=1
+    tmap=
+    for i in $taxa_inc; do
+      for j in `seq $((cnt+1)) $i`; do
+        tmap=${tmap}0
+      done
+      cnt=$((i+1))
+      tmap=${tmap}1
+    done
+    for j in `seq $cnt $max_taxa`; do
       tmap=${tmap}0
     done
-    cnt=$((i+1))
-    tmap=${tmap}1
-  done
-  for j in `seq $cnt $max_taxa`; do
-    tmap=${tmap}0
-  done
 
-  n_gaps=`fgrep -o '-' $locus_file | wc -l`
-  gapyness=`echo "scale=4; $n_gaps/($n_taxa * $n_sites)" | bc -l`
+    n_gaps=`fgrep -o '-' $locus_file | wc -l`
+    gapyness=`echo "scale=4; $n_gaps/($n_taxa * $n_sites)" | bc -l`
 
-  printf "%5s %4s %6s %5s %5s %6s %6s %6s   %s %6s %s\n" $locus_id $n_taxa $taxa_prop $n_sites $n_var $n_inf $var_prop $gapyness $tmap $eftaxa $dups >> $file_loci_desc
-  echo ${locus_id}/${n_loci}
-
+    printf "%5s %4s %6s %5s %5s %6s %6s %6s   %s %6s %s\n" $locus_id $n_taxa $taxa_prop $n_sites $n_var $n_inf $var_prop $gapyness $tmap $eftaxa $dups >> $file_loci_desc
+    echo ${locus_id}/${n_loci}
+  fi
   locus_id=$((locus_id+1))
   cur_line=$((locus_end+1))
 done

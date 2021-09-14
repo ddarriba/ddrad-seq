@@ -12,7 +12,7 @@ arg_filters=$*
 [ -f ${file_taxa} ] || { echo "Taxa file ${file_taxa} missing"; exit; }
 [ -d ${dir_filters} ] || { echo "Filters directory ${dir_filters} missing"; exit; }
 
-[ -f ${script_build_supermatrix} ] || { echo "ERROR: Script ${script_stat_info} does not exist"; exit; }
+[ -f ${script_build_supermatrix} ] || { echo "ERROR: Script ${script_build_supermatrix} does not exist"; exit; }
 
 # output
 [ -z ${file_taxa_desc} ] && { echo "Taxa description file undefined"; exit; }

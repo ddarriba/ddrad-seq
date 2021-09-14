@@ -7,7 +7,7 @@ DATA_DIR=data
 FILES_SUBDIR=outfiles
 
 # tools
-RAXML_BIN=raxmlHPC-SSE3
+RAXML_BIN=raxmlHPC-AVX2
 
 [ -z `which ${RAXML_BIN}` ] && { echo "ERROR: RaxML not found"; exit; }
 
@@ -21,10 +21,16 @@ input_dir=${data_dir}/${FILES_SUBDIR}
 [ -d $input_dir ] || { echo "ERROR: Input data directory $input_dir does not exist"; exit; }
 
 # useful files
+loci_file=`find $input_dir -name "*.loci"`
 phy_file=`find $input_dir -name "*.phy"`
-base_name=`echo $phy_file | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`
+[ -z $loci_file ] && { echo "WARNING: LOCI file in $input_dir not found"; }
+[ -z $phy_file ] && { echo "WARNING: PHYLIP file in $input_dir not found"; }
 
-[ -z $phy_file ] && { echo "ERROR: PHYLIP file in $input_dir not found"; exit; }
+if [ -z $phy_file ]; then
+  base_name=`echo $loci_file | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`
+else
+  base_name=`echo $phy_file | rev | cut -d'/' -f1 | cut -d'.' -f2- | rev`
+fi
 
 echo "--- Preprocessing info ---"
 echo "Data directory: $data_dir"

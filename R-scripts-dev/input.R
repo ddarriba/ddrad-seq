@@ -136,7 +136,7 @@ snp.mat <- function(snp_list, snp_filter=NULL)
   if (DEBUG)
     cat(snp_count, "SNPs included and", taxa_count, "taxa\n")
   
-  snp_matrix$data = matrix(rep("-", taxa_count*snp_count), ncol=snp_count)
+  snp_matrix$data = matrix(rep("?", taxa_count*snp_count), ncol=snp_count)
   rownames(snp_matrix$data) = taxa_names
 
   pb = txtProgressBar(min = 0, max = length(snp_filter), initial = 0)
@@ -183,7 +183,7 @@ loci.mat <- function(loci_list, snp_filter=NULL)
   
   cat("Building empty matrix and data:",taxa_count, matrix_length, "\n")
   stopifnot(FALSE)
-  loci_matrix$data = matrix(rep("-", taxa_count*matrix_length), ncol=matrix_length)
+  loci_matrix$data = matrix(rep("?", taxa_count*matrix_length), ncol=matrix_length)
   loci_matrix$start = rep(0, snp_count)
   loci_matrix$end   = rep(0, snp_count)
   loci_matrix$id    = rep(0, snp_count)
@@ -315,7 +315,7 @@ write.msa.lowmem <- function(loci_list, snp_filter, output_file)
       else
       {
          sequence = paste(sequence,
-                          paste(rep("-", loci_list$data[[locus_id]]$length), collapse=""),
+                          paste(rep("?", loci_list$data[[locus_id]]$length), collapse=""),
                           sep="")
       }
     }
@@ -388,7 +388,7 @@ write.msa <- function(snp_matrix, output_file, format="fasta")
 }
 
 
-read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=TRUE)
+read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=FALSE)
 {
   loci_file = file(filepath, "r")
   on.exit(close(loci_file))
@@ -433,7 +433,6 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=TRU
          # first line
          locus_length = nchar(sequences[lseq_count])
          seq_start = gregexpr(pattern=sequences[lseq_count],line)[[1]][1]
-
          line_end = nchar(line)
          lhash[1] = lh
          luniq_count = 1
@@ -464,12 +463,10 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=TRU
 
       # .. correct 'meta' start
       match_end = gregexpr(pattern="\\|",line)[[1]][1]
-      seq_start = seq_start + (line_end-match_end-1)
-
+      seq_start = seq_start + (match_end-line_end-1)
       metainfo = substring(line, first=seq_start, last=match_end-1)
-      
-      locus_id = as.integer(strsplit(line, "\\|")[[1]][2])
-      
+      stopifnot(nchar(metainfo) == locus_length)
+
       loci_all_count = loci_all_count + 1
       if (loci_all_count %% 1000 == 0)
       {
@@ -478,6 +475,10 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=TRU
           cat(" ", loci_all_count,"/?\n")
       }
 
+      locus_id = as.integer(strsplit(line, "\\|")[[1]][2])
+      if (is.na(locus_id))
+        locus_id = loci_all_count
+        
       inf_sites=gregexpr(pattern='\\*', metainfo)[[1]]
       if (inf_sites[1] > -1)
         inf_count = length(inf_sites)
@@ -504,7 +505,9 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=TRU
       loci_list$data[[loci_all_count]]$inf_sites = inf_sites
       loci_list$data[[loci_all_count]]$inf_count = inf_count
       #loci_list[[loci_all_count]]$sequences = sequences
-      loci_list$data[[loci_all_count]]$sequences = matrix(strsplit(paste(sequences, collapse=""), "")[[1]],ncol=locus_length,byrow=TRUE)
+      loci_list$data[[loci_all_count]]$sequences = matrix(strsplit(paste(sequences, collapse=""), "")[[1]],
+                                                          ncol=locus_length,
+                                                          byrow=TRUE)
       rownames(loci_list$data[[loci_all_count]]$sequences) = ltaxa
 
       cn = rep("", locus_length)
