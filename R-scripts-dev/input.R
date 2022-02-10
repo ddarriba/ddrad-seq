@@ -3,6 +3,8 @@ STATE_SCORES = c("A"=0,"C"=0,"G"=0,"T"=0,"U"=0,
                  "B"=4,"D"=4,"H"=4,"V"=4,"N"=16,"-"=16)
 DEBUG = FALSE
 
+SEQ_REGEX = "[ |\t][ACGTUWSMKRYBDHVNacgtuwsmkrybdhvn-]"
+
 strhash <- function(str)
 {
   hv = as.integer(charToRaw(str))
@@ -427,12 +429,11 @@ read.loci <- function(filepath, collapse_identical_sequences=TRUE, n_as_gaps=FAL
       sequences[lseq_count] = pieces[[1]][2]
 
       lh = strhash(sequences[lseq_count])
-
       if (lseq_count == 1)
       {
          # first line
          locus_length = nchar(sequences[lseq_count])
-         seq_start = gregexpr(pattern=sequences[lseq_count],line)[[1]][1]
+         seq_start = gregexpr(pattern=sequences[lseq_count],line,fixed=TRUE)[[1]][1]
          line_end = nchar(line)
          lhash[1] = lh
          luniq_count = 1
